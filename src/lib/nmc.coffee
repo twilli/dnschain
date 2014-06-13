@@ -1,9 +1,9 @@
 ###
 
 dnschain
-http://dnschain.net
+http://dnschain.org
 
-Copyright (c) 2013 Greg Slepak
+Copyright (c) 2014 okTurtles Foundation
 
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,7 +21,7 @@ module.exports = (dnschain) ->
             # @log = @dnschain.log.child server: "NMC"
             @log = gNewLogger 'NMC'
             @log.debug "Loading NMCPeer..."
-            
+
             # we want them in this exact order:
             params = ["port", "connect", "user", "password"].map (x)-> gConf.nmc.get 'rpc'+x
             @peer = rpc.Client.create(params...) or gErr "rpc create"

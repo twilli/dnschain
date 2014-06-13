@@ -1,9 +1,9 @@
 ###
 
 dnschain
-http://dnschain.net
+http://dnschain.org
 
-Copyright (c) 2013 Greg Slepak
+Copyright (c) 2014 okTurtles Foundation
 
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -70,7 +70,7 @@ module.exports = (dnschain) ->
 
     props.parse = _.partialRight props.parse, fileFormatOpts
     props.stringify = _.partialRight props.stringify, fileFormatOpts
-    
+
 
     # load our config
     appname = "dnschain"
@@ -86,7 +86,7 @@ module.exports = (dnschain) ->
 
     # namecoin
     nmc = (new nconf.Provider()).argv().env()
-    
+
     nmcConf = if process.env.APPDATA?
         path.join process.env.APPDATA, "Namecoin", "namecoin.conf"
     else if process.env.HOME?
