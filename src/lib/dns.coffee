@@ -18,6 +18,11 @@ module.exports = (dnschain) ->
     for k of dnschain.globals
         eval "var #{k} = dnschain.globals.#{k};"
 
+    unblockSettings = gConf.get "unblock"
+    if unblockSettings.enabled
+        unblockUtils = require('./unblock/utils')(dnschain)
+        unblockDNS = require('./unblock/dns')(dnschain)
+
     dnsTypeHandlers = require('./dns-handlers')(dnschain)
 
     QTYPE_NAME = dns2.consts.QTYPE_TO_NAME
@@ -154,6 +159,8 @@ module.exports = (dnschain) ->
                 res.answer.push gIP2type(q.name,ttl,QTYPE_NAME[q.type])(gConf.get 'dns:externalIP')
                 @log.debug {fn:'cb|.dns', q:q, answer:res.answer}
                 res.send()
+            else if unblockSettings.enabled and unblockUtils.isHijacked(q.name) and q.type == 1 # TODO: ipv6 here
+                unblockUtils.hijack req, res
             else
                 @log.debug "deferring request", {fn: "cb|else", q:q}
                 @oldDNSLookup req, res

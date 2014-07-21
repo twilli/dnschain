@@ -23,6 +23,17 @@ module.exports = (dnschain) ->
     # - https://wiki.namecoin.info/index.php?title=Namecoin_Specification
     VALID_NMC_DOMAINS = /^[a-zA-Z]+\/.+/
 
+    unblockSettings = gConf.get "unblock"
+    if unblockSettings.enabled
+        unblockLog = gNewLogger "Unblock"
+        unblockUtils = require('./unblock/utils')(dnschain)
+        unblockProxy = require 'http-proxy'
+        proxyServer = unblockProxy.createProxyServer {}
+        proxyServer.on "error", (err, req, res) ->
+            unblockLog.error "HTTP tunnel failed: "+req.headers.host+" for "+req.connection?.remoteAddress
+            res.writeHead 500
+            res.end()
+
     class HTTPServer
         constructor: (@dnschain) ->
             # @log = @dnschain.log.child server: "HTTP"
@@ -46,22 +57,24 @@ module.exports = (dnschain) ->
         callback: (req, res) ->
             path = S(url.parse(req.url).pathname).chompLeft('/').s
 
-            # IF HIJACKED GOES HERE
+            if unblockSettings.enabled and unblockUtils.isHijacked(req.headers.host)
+                proxyServer.web req, res, {target: "http://"+req.headers.host, secure:false}
+                unblockLog.debug "HTTP tunnel: "+req.headers.host+" for "+req.connection?.remoteAddress
+            else
+                @log.debug gLineInfo('request'), {path:path, url:req.url}
 
-            @log.debug gLineInfo('request'), {path:path, url:req.url}
+                notFound = ->
+                    res.writeHead 404,  'Content-Type': 'text/plain'
+                    res.write "Not Found: #{path}"
+                    res.end()
 
-            notFound = ->
-                res.writeHead 404,  'Content-Type': 'text/plain'
-                res.write "Not Found: #{path}"
-                res.end()
+                unless VALID_NMC_DOMAINS.test path
+                    @log.debug 'ignoring request for:', path
+                    return notFound()
 
-            unless VALID_NMC_DOMAINS.test path
-                @log.debug 'ignoring request for:', path
-                return notFound()
-
-            @dnschain.nmc.resolve path, (err,result) =>
-                return notFound() if err
-                res.writeHead 200, 'Content-Type': 'application/json'
-                @log.debug gLineInfo('cb|resolve'), {path:path, result:result}
-                res.write result.value, "utf8"
-                res.end()
+                @dnschain.nmc.resolve path, (err,result) =>
+                    return notFound() if err
+                    res.writeHead 200, 'Content-Type': 'application/json'
+                    @log.debug gLineInfo('cb|resolve'), {path:path, result:result}
+                    res.write result.value, "utf8"
+                    res.end()
