@@ -20,7 +20,7 @@ module.exports = (dnschain) ->
         constructor: (@dnschain) ->
             # @log = @dnschain.log.child server: "NMC"
             @log = gNewLogger 'NMC'
-            @log.debug "Loading NMCPeer..."
+            @log.debug gLineInfo "Loading NMCPeer..."
 
             # we want them in this exact order:
             params = ["port", "connect", "user", "password"].map (x)-> gConf.nmc.get 'rpc'+x
@@ -28,9 +28,9 @@ module.exports = (dnschain) ->
             @log.info "connected to namecoind: %s:%d", params[1], params[0]
 
         shutdown: ->
-            @log.debug 'shutting down!'
+            @log.debug gLineInfo 'shutting down!'
             # @peer.end() # TODO: fix this!
 
         resolve: (path, cb) ->
-            @log.debug {fn: 'resolve', path: path}
+            @log.debug gLineInfo(), {fn: 'resolve', path: path}
             @peer.call 'name_show', [path], cb
