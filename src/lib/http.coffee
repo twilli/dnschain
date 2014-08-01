@@ -1,3 +1,4 @@
+
 ###
 
 dnschain
@@ -61,3 +62,10 @@ module.exports = (dnschain) ->
                 @log.debug gLineInfo('cb|resolve'), {path:path, result:result}
                 res.write result.value
                 res.end()
+
+            #@dnschain.nxt.resolve path, (err,result) =>
+            #    return notFound() if err
+            #    res.writeHead 200, 'Content-Type': 'application/json'
+            #    @log.debug gLineInfo('cb|resolve'), {path:path, result:result}
+            #    res.write result.value
+            #    res.end()

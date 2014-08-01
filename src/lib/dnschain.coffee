@@ -57,6 +57,7 @@ for k of require('./globals')(exports)
 exports.createServer = (a...) -> new DNSChain a...
 
 NMCPeer = require('./nmc')(exports)
+NXTPeer = require('./nxt')(exports)
 DNSServer = require('./dns')(exports)
 HTTPServer = require('./http')(exports)
 
@@ -65,6 +66,7 @@ exports.DNSChain = class DNSChain
         @log = gNewLogger 'DNSChain'
         try
             @nmc = new NMCPeer @
+            @nxt = new NXTPeer @
             @dns = new DNSServer @
             @http = new HTTPServer @
             @log.info "DNSChain started and advertising on: #{gConf.get 'dns:externalIP'}"
@@ -76,5 +78,6 @@ exports.DNSChain = class DNSChain
             @shutdown()
             throw e # rethrow
 
-    shutdown: -> [@nmc, @dns, @http].forEach (s) -> s?.shutdown?()
+    shutdown: -> [@nmc, @nxt, @dns, @http].forEach (s) -> s?.shutdown?()
+
 

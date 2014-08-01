@@ -148,6 +148,46 @@ module.exports = (dnschain) ->
                                 @log.error gLineInfo("exception in handler"), {q:q, result:result}
                                 return @sendErr res, NAME_RCODE.SERVFAIL
 
+            else if S(q.name).endsWith '.nxt'
+                nxtDomain = @nxtizeDomain q.name
+                ttl = 100 # average block time
+                @log.debug "resolving via nxt...", {fn: 'cb|.nxt', nxtDomain:nxtDomain, q:q}
+                @dnschain.nxt.resolve nxtDomain, (err, result) =>
+                    
+                    fn = 'getAlias|cb' # TODO: replace with gLineInfo
+                    if err? or !result
+                        @log.error gLineInfo("nxt failed to resolve"), {err:err?.message, result:result, q:q}
+                        @sendErr res
+                    else
+                        @log.debug "nxt resolved query", {fn:fn, q:q, d:nxtDomain, result:result}
+
+                        try
+                            result = JSON.parse result
+                            if result.errorCode?
+                                return @sendErr res, NAME_RCODE.SERVFAIL
+                            result.value = JSON.parse result.aliasURI
+                            @log.debug(result.value)
+                        catch e
+                            @log.warn e.stack
+                            @log.warn gLineInfo("bad JSON!"), {q:q, result:result}
+                            return @sendErr res, NAME_RCODE.FORMERR
+
+                        if !(handler = dnsTypeHandlers.namecoin[QTYPE_NAME[q.type]])
+                            @log.warn gLineInfo("no such handler!"), {q:q, type: QTYPE_NAME[q.type]}
+                            return @sendErr res, NAME_RCODE.NOTIMP
+
+                        handler.call @, req, res, qIdx, result, (errCode) =>
+                            try
+                                if errCode
+                                    @sendErr res, errCode
+                                else
+                                    @log.debug "sending response!", {fn:'cb', res:_.omit(res, '_socket')}
+                                    res.send()
+                            catch e
+                                @log.error e.stack
+                                @log.error gLineInfo("exception in handler"), {q:q, result:result}
+                                return @sendErr res, NAME_RCODE.SERVFAIL
+
             else if S(q.name).endsWith '.dns'
                 # TODO: right now we're doing a catch-all and pretending they asked
                 #       for namecoin.dns...
@@ -164,6 +204,12 @@ module.exports = (dnschain) ->
             if (dotIdx = nmcDomain.lastIndexOf('.')) != -1
                 nmcDomain = nmcDomain.slice(dotIdx+1) # rm subdomain
             'd/' + nmcDomain # add 'd/' namespace
+
+        nxtizeDomain: (domain) ->
+            nxtDomain = S(domain).chompRight('.nxt').s
+            if (dotIdx = nxtDomain.lastIndexOf('.')) != -1
+                nxtDomain = nxtDomain.slice(dotIdx+1) # rm subdomain
+            nxtDomain
 
         oldDNSLookup: (req, res) ->
             sig = "oldDNS{#{@method}}"
@@ -238,3 +284,4 @@ module.exports = (dnschain) ->
             catch e
                 @log.error gLineInfo('exception sending error back!'), e.stack
             false # helps other functions pass back an error value
+

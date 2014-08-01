@@ -63,6 +63,10 @@ module.exports = (dnschain) ->
         rpcuser: undefined
         rpcpassword: undefined
 
+    nxtDefs =
+        port: 7876 # testnet 6876
+        connect: '127.0.0.1'
+
     fileFormatOpts =
         comments: ['#', ';']
         sections: true
@@ -86,6 +90,7 @@ module.exports = (dnschain) ->
 
     # namecoin
     nmc = (new nconf.Provider()).argv().env()
+    nxt = (new nconf.Provider()).argv().env()
     
     nmcConf = if process.env.APPDATA?
         path.join process.env.APPDATA, "Namecoin", "namecoin.conf"
@@ -97,6 +102,7 @@ module.exports = (dnschain) ->
     stores =
         dnschain: nconf.defaults defaults
         nmc: nmc.defaults nmcDefs
+        nxt: nxt.defaults nxtDefs
 
     config =
         get: (key, store="dnschain") -> stores[store].get key
@@ -105,3 +111,6 @@ module.exports = (dnschain) ->
         nmc:
             get: (key)-> config.get key, 'nmc'
             set: (key, value)-> config.set key, value, 'nmc'
+        nxt:
+            get: (key)-> config.get key, 'nxt'
+            set: (key, value)-> config.set key, value, 'nxt'
