@@ -1,3 +1,4 @@
+
 ###
 
 dnschain
@@ -171,6 +172,15 @@ module.exports = (dnschain) ->
                             @log.warn e.stack
                             @log.warn gLineInfo("bad JSON!"), {q:q, result:result}
                             return @sendErr res, NAME_RCODE.FORMERR
+
+                        subdomain = S(q.name).chompRight(nxtDomain + '.nxt').s
+                        subdomain = S(subdomain).chompRight('.').s
+                        [..., subdomain] = subdomain.split "."
+
+                        for key, value of result.value.map
+                            if(key == subdomain && value.alias != '')
+                                @log.debug(value)
+                                result.value = value
 
                         if !(handler = dnsTypeHandlers.namecoin[QTYPE_NAME[q.type]])
                             @log.warn gLineInfo("no such handler!"), {q:q, type: QTYPE_NAME[q.type]}
