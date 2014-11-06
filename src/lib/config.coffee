@@ -47,13 +47,13 @@ module.exports = (dnschain) ->
             port: if amRoot then 53 else 5333
             host: '0.0.0.0' # what we bind to
             externalIP: gExternalIP() # Advertised IP for .dns metaTLD (ex: namecoin.dns)
-            oldDNSMethod: 'NO_OLD_DNS' #'NATIVE_DNS' # see 'globals.coffee' for possible values
+            oldDNSMethod: 'NATIVE_DNS' #'NATIVE_DNS' # see 'globals.coffee' for possible values
             oldDNS:
-                address: '8.8.8.8' # Google (we recommend running PowerDNS yourself and sending it there)
-                port: 53
+                address: '127.0.0.1' # Google (we recommend running PowerDNS yourself and sending it there)
+                port: 5353
                 type: 'udp'
         http:
-            port: if amRoot then 80 else 8088
+            port: if amRoot then 8080 else 8088
             tlsPort: if amRoot then 443 else 4443
             host: '0.0.0.0' # what we bind to
 

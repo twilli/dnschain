@@ -3,7 +3,7 @@
 dnschain
 http://dnschain.net
 
-Copyright (c) 2013 Greg Slepak
+Copyright (c) 2014 okTurtles Foundation
 
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,13 +24,21 @@ module.exports = (dnschain) ->
             
             # we want them in this exact order:
             params = ["port", "connect", "user", "password"].map (x)-> gConf.nmc.get 'rpc'+x
-            @peer = rpc.Client.create(params...) or gErr "rpc create"
-            @log.info "connected to namecoind: %s:%d", params[1], params[0]
+            @peer = rpc.Client.$create(params...) or gErr "rpc create"
+
+            # TODO: $create doesn't actually connect. you need to open a raw socket
+            #       or an http socket and see if that works before declaring it works
+            @log.info "rpc to namecoind on: %s:%d", params[1], params[0]
+            # TODO: if namecoin.conf isn't found, disable like in bdns.coffee
 
         shutdown: ->
             @log.debug 'shutting down!'
             # @peer.end() # TODO: fix this!
 
         resolve: (path, cb) ->
-            @log.debug {fn: 'resolve', path: path}
+            @log.debug gLineInfo('nmc resolve'), {path:path}
             @peer.call 'name_show', [path], cb
+
+        # TODO: make this cleaner. this is kinda ugly.
+        toJSONstr: (json) -> json.value
+        toJSONobj: (json) -> JSON.parse json.value
